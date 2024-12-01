@@ -4,7 +4,7 @@ Utility functions for M-AI
 Common utilities and helper functions used across the project.
 """
 
-from .logger import get_logger, setup_logger
+from .logger import get_logger
 from .constants import (
     ROOT_DIR,
     CONFIG_DIR,
@@ -16,7 +16,6 @@ from .constants import (
 
 __all__ = [
     'get_logger',
-    'setup_logger',
     'ROOT_DIR',
     'CONFIG_DIR',
     'LOGS_DIR',

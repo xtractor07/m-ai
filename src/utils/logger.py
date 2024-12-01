@@ -3,7 +3,7 @@ from __future__ import annotations
 """
 Logging Configuration for M-AI
 ----------------------------
-Provides a centralized logging configuration with different handlers
+Implements a hierarchical logging system with different configurations
 for development and production environments.
 """
 
@@ -12,116 +12,111 @@ import logging.handlers
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Union
 
 from .constants import LOGS_DIR
 
 # Ensure logs directory exists
 Path(LOGS_DIR).mkdir(parents=True, exist_ok=True)
 
-# Log format with timestamp, level, module, and message
-DEFAULT_LOG_FORMAT = "%(asctime)s - %(levelname)s - %(module)s - %(message)s"
+# Constants for logging
+DEFAULT_LOG_FORMAT = "[%(asctime)s] %(levelname)-8s %(name)s - %(message)s"
 DETAILED_LOG_FORMAT = (
-    "%(asctime)s - %(levelname)s - [%(name)s.%(funcName)s:%(lineno)d] - %(message)s"
+    "[%(asctime)s] %(levelname)-8s [%(name)s:%(funcName)s:%(lineno)d] - %(message)s"
 )
+MAX_BYTES = 10 * 1024 * 1024  # 10MB
+BACKUP_COUNT = 5
 
-# Log file names
-DEBUG_LOG = os.path.join(LOGS_DIR, "debug.log")
-INFO_LOG = os.path.join(LOGS_DIR, "info.log")
-ERROR_LOG = os.path.join(LOGS_DIR, "error.log")
 
-def setup_logger(
-    name: str,
-    level: int = logging.INFO,
-    env: str = "development",
-    log_file: Optional[str] = None,
-    max_bytes: int = 10485760,  # 10MB
-    backup_count: int = 5
-) -> logging.Logger:
-    """
-    Set up a logger with appropriate handlers and formatters.
+class LoggerConfigurator:
+    """Configures logging for the M-AI application."""
 
-    Args:
-        name: Name of the logger
-        level: Logging level
-        env: Environment ('development' or 'production')
-        log_file: Optional specific log file path
-        max_bytes: Maximum size of each log file
-        backup_count: Number of backup files to keep
+    def __init__(
+        self,
+        log_level: Union[str, int] = logging.INFO,
+        environment: str = "development",
+    ) -> None:
+        """
+        Initialize the logger configurator.
 
-    Returns:
-        Configured logger instance
-    """
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
+        Args:
+            log_level: The logging level to use
+            environment: The environment ('development' or 'production')
+        """
+        self.log_level = (
+            log_level if isinstance(log_level, int) else getattr(logging, log_level.upper())
+        )
+        self.environment = environment
+        self.log_format = (
+            DETAILED_LOG_FORMAT if environment == "development" else DEFAULT_LOG_FORMAT
+        )
 
-    # Remove existing handlers if any
-    if logger.hasHandlers():
-        logger.handlers.clear()
+    def _create_console_handler(self) -> logging.Handler:
+        """Create a console handler for logging."""
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(logging.Formatter(self.log_format))
+        return console_handler
 
-    # Create formatters
-    formatter = logging.Formatter(
-        DETAILED_LOG_FORMAT if env == "development" else DEFAULT_LOG_FORMAT
-    )
-
-    # Console handler (stdout for INFO and below, stderr for WARNING and above)
-    if env == "development":
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(formatter)
-        stdout_handler.setLevel(logging.DEBUG)
-        stdout_handler.addFilter(lambda record: record.levelno <= logging.INFO)
-        logger.addHandler(stdout_handler)
-
-        stderr_handler = logging.StreamHandler(sys.stderr)
-        stderr_handler.setFormatter(formatter)
-        stderr_handler.setLevel(logging.WARNING)
-        logger.addHandler(stderr_handler)
-
-    # File handlers
-    if log_file:
+    def _create_file_handler(self, filename: str) -> logging.Handler:
+        """Create a rotating file handler for logging."""
+        log_file = os.path.join(LOGS_DIR, filename)
         file_handler = logging.handlers.RotatingFileHandler(
             log_file,
-            maxBytes=max_bytes,
-            backupCount=backup_count,
-            encoding='utf-8'
+            maxBytes=MAX_BYTES,
+            backupCount=BACKUP_COUNT,
+            encoding="utf-8",
         )
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(level)
-        logger.addHandler(file_handler)
+        file_handler.setFormatter(logging.Formatter(self.log_format))
+        return file_handler
 
-    return logger
+    def get_logger(self, name: str, filename: Optional[str] = None) -> logging.Logger:
+        """
+        Get a configured logger instance.
+
+        Args:
+            name: The name of the logger
+            filename: Optional filename for file-based logging
+
+        Returns:
+            logging.Logger: Configured logger instance
+        """
+        logger = logging.getLogger(name)
+        logger.setLevel(self.log_level)
+
+        # Remove existing handlers to avoid duplication
+        logger.handlers.clear()
+
+        # Add console handler
+        logger.addHandler(self._create_console_handler())
+
+        # Add file handler if filename is provided
+        if filename:
+            logger.addHandler(self._create_file_handler(filename))
+
+        # Prevent propagation to root logger
+        logger.propagate = False
+
+        return logger
+
+
+# Default configurator instances
+dev_configurator = LoggerConfigurator(log_level=logging.DEBUG, environment="development")
+prod_configurator = LoggerConfigurator(log_level=logging.INFO, environment="production")
+
 
 def get_logger(
-    name: str,
-    config: Optional[Dict[str, Any]] = None
+    name: str, filename: Optional[str] = None, environment: str = "development"
 ) -> logging.Logger:
     """
-    Get or create a logger with the given name and configuration.
+    Get a configured logger instance.
 
     Args:
-        name: Name of the logger
-        config: Optional configuration dictionary
+        name: The name of the logger
+        filename: Optional filename for file-based logging
+        environment: The environment ('development' or 'production')
 
     Returns:
-        Configured logger instance
+        logging.Logger: Configured logger instance
     """
-    if config is None:
-        config = {}
-
-    env = config.get('environment', 'development')
-    level = config.get('level', logging.INFO)
-    log_file = config.get('log_file')
-
-    return setup_logger(
-        name=name,
-        level=level,
-        env=env,
-        log_file=log_file,
-        max_bytes=config.get('max_bytes', 10485760),
-        backup_count=config.get('backup_count', 5)
-    )
-
-# Create default loggers for different levels
-debug_logger = setup_logger('debug', logging.DEBUG, log_file=DEBUG_LOG)
-info_logger = setup_logger('info', logging.INFO, log_file=INFO_LOG)
-error_logger = setup_logger('error', logging.ERROR, log_file=ERROR_LOG)
+    configurator = dev_configurator if environment == "development" else prod_configurator
+    return configurator.get_logger(name, filename)
