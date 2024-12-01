@@ -42,3 +42,4 @@ __all__ = [
     'ConfigManager',
     'config_manager',
 ]
+

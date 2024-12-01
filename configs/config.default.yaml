@@ -1,4 +1,4 @@
-# Development configuration for M-AI
+# Default configuration for M-AI
 
 environment: development
 
@@ -12,10 +12,10 @@ model:
 
 # API configuration
 api:
-  host: "localhost"
+  host: "0.0.0.0"
   port: 8000
   debug: true
   workers: 1
 
 # Logging configuration
-log_level: "DEBUG"
+log_level: "INFO"

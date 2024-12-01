@@ -53,3 +53,5 @@ weights/
 *.db
 *.sqlite3
 .DS_Store
+logs/
+*.log

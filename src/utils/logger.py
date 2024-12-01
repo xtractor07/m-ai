@@ -1,11 +1,4 @@
-from __future__ import annotations
-
-"""
-Logging Configuration for M-AI
-----------------------------
-Implements a hierarchical logging system with different configurations
-for development and production environments.
-"""
+"""Logging Configuration for M-AI."""
 
 import logging
 import logging.handlers
@@ -44,7 +37,9 @@ class LoggerConfigurator:
             environment: The environment ('development' or 'production')
         """
         self.log_level = (
-            log_level if isinstance(log_level, int) else getattr(logging, log_level.upper())
+            log_level
+            if isinstance(log_level, int)
+            else getattr(logging, log_level.upper())
         )
         self.environment = environment
         self.log_format = (
