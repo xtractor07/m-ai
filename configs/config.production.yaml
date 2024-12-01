@@ -1,0 +1,21 @@
+# Production configuration for M-AI
+
+environment: production
+
+# Model configuration
+model:
+  model_size: "70B"  # Using larger model for production
+  model_path: "/opt/m-ai/models/llama-2-70b"
+  max_tokens: 4096
+  temperature: 0.8
+  top_p: 0.95
+
+# API configuration
+api:
+  host: "0.0.0.0"  # Allow external connections
+  port: 8000
+  debug: false
+  workers: 4  # More workers for production load
+
+# Logging configuration
+log_level: "INFO"

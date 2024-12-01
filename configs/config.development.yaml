@@ -1,0 +1,21 @@
+# Development configuration for M-AI
+
+environment: development
+
+# Model configuration
+model:
+  model_size: "7B"
+  model_path: "models/llama-2-7b"
+  max_tokens: 2048
+  temperature: 0.7
+  top_p: 0.9
+
+# API configuration
+api:
+  host: "localhost"
+  port: 8000
+  debug: true
+  workers: 1
+
+# Logging configuration
+log_level: "DEBUG"
