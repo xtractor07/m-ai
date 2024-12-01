@@ -24,7 +24,10 @@ repos:
     rev: v1.13.0
     hooks:
     -   id: mypy
-        additional_dependencies: [types-all]
+        additional_dependencies:
+          - types-PyYAML>=6.0.0
+          - types-requests>=2.31.0
+          - types-setuptools>=68.0.0
 
 -   repo: https://github.com/PyCQA/isort
     rev: 5.13.2
