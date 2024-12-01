@@ -6,12 +6,10 @@ __pycache__/
 *.so
 .Python
 *.pyc
-.idea/
 .pytest_cache/
 dist/
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -31,16 +29,14 @@ env/
 ENV/
 
 # IDEs
-.idea/
 .vscode/
 *.swp
 *.swo
-
+.idea/
 # Logs
 .mypy_cache/
 .coverage
 htmlcov/
-.DS_Store
 logs/
 *.log
 
